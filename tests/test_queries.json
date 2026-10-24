@@ -1,0 +1,64 @@
+[
+  {
+    "id": 1,
+    "query": "how do I replace the battery",
+    "category": "Phone",
+    "expected_keywords": ["battery", "screw", "adhesive", "connector"]
+  },
+  {
+    "id": 2,
+    "query": "screen is cracked and not responding to touch",
+    "category": "Phone",
+    "expected_keywords": ["screen", "display", "digitizer", "lcd"]
+  },
+  {
+    "id": 3,
+    "query": "camera lens looks foggy",
+    "category": "Phone",
+    "expected_keywords": ["camera", "lens"]
+  },
+  {
+    "id": 4,
+    "query": "phone won't charge",
+    "category": "Phone",
+    "expected_keywords": ["charg", "port", "battery"]
+  },
+  {
+    "id": 5,
+    "query": "washing machine won't drain",
+    "category": "Appliance",
+    "expected_keywords": ["drain", "pump", "hose", "filter"]
+  },
+  {
+    "id": 6,
+    "query": "refrigerator not cooling",
+    "category": "Appliance",
+    "expected_keywords": ["compressor", "coolant", "thermostat", "fan"]
+  },
+  {
+    "id": 7,
+    "query": "dishwasher door won't latch",
+    "category": "Appliance",
+    "expected_keywords": ["latch", "door", "switch"]
+  },
+  {
+    "id": 8,
+    "query": "how to replace a broken screen",
+    "category": null,
+    "expected_keywords": ["screen", "display"]
+  },
+  {
+    "id": 9,
+    "query": "how do I replace my car's timing belt",
+    "category": "Phone",
+    "expected_keywords": [],
+    "expect_low_relevance": true,
+    "note": "Off-domain query forced into an unrelated category filter - checks the system doesn't confidently hallucinate an answer from irrelevant retrieved chunks."
+  },
+  {
+    "id": 10,
+    "query": "dishwasher is leaking water underneath",
+    "category": "Appliance",
+    "expected_keywords": ["leak", "hose", "seal", "gasket"]
+  }
+]

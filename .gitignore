@@ -1,0 +1,9 @@
+.env
+data/
+eval_output.txt
+eval_run*.txt
+_debug_search.py
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
+venv/
