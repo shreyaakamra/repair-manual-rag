@@ -1,116 +1,156 @@
 """
-tests/eval_retrieval.py
+tests/eval_retrieval.py (tiered version)
 
-Evaluates the RETRIEVAL layer only (no generation, no API cost) against
-tests/test_queries.json. Two metrics, both automatable without a
-human-labeled ground-truth answer set:
+Evaluates RETRIEVAL only (no generation, no API cost) against the tiered
+tests/test_queries.json.
 
-1. Category-filter accuracy: every result returned when a category filter
-   is applied must actually belong to that category. This should be 100%
-   by construction (Qdrant enforces the filter) - it's here as a
-   regression guard, not a discovery tool. If this ever fails, the filter
-   logic in search.py broke.
-
-2. Keyword-recall@k: for each query, do ANY of its expected_keywords
-   (domain terms a correct answer should surface) appear in the text of
-   the top-k retrieved chunks? This is a proxy for "did we retrieve
-   something topically relevant," not a substitute for a real labeled
-   relevance judgment - see the README's honesty about this in mind.
-   Queries with expect_low_relevance=true are scored differently: they
-   pass if the top score is BELOW a low-relevance threshold, since the
-   point of that query is that nothing good should match.
+What each metric means:
+- Guide hit@k: did a guide the query was labeled with show up in the top-k
+  results? Used for 'easy' queries and any 'hard' query with guide IDs.
+- MRR: 1 / (position of the first correct guide), averaged. 1.0 means the
+  right guide was always first; 0.2 means it was typically fifth.
+- Subject hit@k: for symptom queries labeled by part patterns (regexes such
+  as 'vibrat' or 'charg|usb'), did any result's part name match? Looser than a guide hit:
+  it proves the right PART was found, not the right guide.
+- Category correctness: when a category was chosen, every result must be
+  from that category. Empty results FAIL (an empty set must never pass).
+- Off-domain: top score must stay below LOW_RELEVANCE_SCORE_THRESHOLD.
+- 'ambiguous' and 'not_covered' queries are not scored here; they print
+  what came back so you can read it (not_covered is judged at generation).
 
 Run:
-    python tests/eval_retrieval.py
+    python -m tests.eval_retrieval                  # dev split (default)
+    python -m tests.eval_retrieval --split holdout  # only for final numbers
+    python -m tests.eval_retrieval --split all
 """
 
+import argparse
 import json
+import re
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from search import search
-from config import RETRIEVAL_K, TESTS_DIR
+from config import QDRANT_COLLECTION, RETRIEVAL_K, TESTS_DIR
 
-LOW_RELEVANCE_SCORE_THRESHOLD = 0.42  # empirically, off-domain queries can score up to ~0.41 due to
-                                       # generic procedural-language overlap (e.g. "remove/lift a small
-                                       # part" language shared between a car timing belt and a phone
-                                       # ribbon-cable latch) - see decisions.md
+LOW_RELEVANCE_SCORE_THRESHOLD = 0.42
+EASY_HIT_TARGET = 0.70  # acceptance criterion: 70% on easy queries
 
 
-def load_test_queries():
+def load_queries(split: str) -> list[dict]:
     with open(TESTS_DIR / "test_queries.json", encoding="utf-8") as f:
-        return json.load(f)
+        queries = json.load(f)
+    if split == "all":
+        return queries
+    return [q for q in queries if q.get("split") == split]
 
 
-def evaluate():
-    queries = load_test_queries()
+def unique_guides_in_order(results: list[dict]) -> list:
+    """Retrieval returns chunks; several can come from one guide."""
+    seen = []
+    for r in results:
+        if r["guide_id"] not in seen:
+            seen.append(r["guide_id"])
+    return seen
 
-    category_checks = 0
-    category_passes = 0
-    keyword_checks = 0
-    keyword_passes = 0
-    low_relevance_checks = 0
-    low_relevance_passes = 0
 
-    print(f"Running {len(queries)} retrieval eval queries (k={RETRIEVAL_K})...\n")
+def short(results: list[dict], n: int = 3) -> str:
+    return "; ".join(
+        f"{r['guide_title']} (id {r['guide_id']}, {r['score']:.2f})" for r in results[:n]
+    )
+
+
+def rate(values: list) -> str:
+    return f"{sum(values)}/{len(values)} ({100 * sum(values) / len(values):.0f}%)"
+
+
+def evaluate(split: str = "dev", k: int = RETRIEVAL_K) -> bool:
+    queries = load_queries(split)
+    metrics = defaultdict(lambda: defaultdict(list))  # tier -> metric -> values
+    print(f"Collection: {QDRANT_COLLECTION}")
+    print(f"Running {len(queries)} '{split}' queries (k={k})...\n")
 
     for q in queries:
-        results = search(q["query"], category=q.get("category"), k=RETRIEVAL_K)
-        top_score = results[0]["score"] if results else 0.0
+        tier = q["tier"]
+        results = search(q["query"], category=q.get("category"), k=k)
+        top_score = results[0]["top_vector_score"] if results else 0.0
+        tag = f"#{q['id']} [{tier}] '{q['query']}'"
 
-        # --- category-filter correctness ---
+        # category correctness: never let an empty result set pass
         if q.get("category"):
-            category_checks += 1
-            ok = all(r["source_category"] == q["category"] for r in results)
-            category_passes += int(ok)
-            status = "PASS" if ok else "FAIL"
+            ok = bool(results) and all(r["source_category"] == q["category"] for r in results)
+            metrics[tier]["category"].append(ok)
             if not ok:
-                print(f"[{status}] #{q['id']} category filter leaked a wrong category!")
+                print(f"[FAIL] {tag} -> category check failed ({len(results)} results)")
 
-        # --- low-relevance sanity check ---
-        if q.get("expect_low_relevance"):
-            low_relevance_checks += 1
+        if tier in ("easy", "hard") and q.get("expected_guide_ids"):
+            guides = unique_guides_in_order(results)
+            wanted = set(q["expected_guide_ids"])
+            pos = next((i for i, g in enumerate(guides, 1) if g in wanted), None)
+            hit = pos is not None
+            metrics[tier]["guide_hit"].append(hit)
+            metrics[tier]["rr"].append(1 / pos if pos else 0.0)
+            print(f"[{'PASS' if hit else 'FAIL'}] {tag} -> first correct guide at rank {pos} "
+                  f"(top score {top_score:.2f})")
+            if not hit:
+                print(f"       got: {short(results)}")
+
+        elif tier == "hard" and (q.get("expected_subject_patterns") or q.get("expected_subjects")):
+            if q.get("expected_subject_patterns"):
+                pats = [re.compile(p, re.I) for p in q["expected_subject_patterns"]]
+                hit = any(p.search(r.get("subject") or "") for p in pats for r in results)
+            else:
+                wanted = {s.lower() for s in q["expected_subjects"]}
+                hit = any((r.get("subject") or "").lower() in wanted for r in results)
+            metrics[tier]["subject_hit"].append(hit)
+            print(f"[{'PASS' if hit else 'FAIL'}] {tag} -> right part found: {hit} "
+                  f"(top score {top_score:.2f})")
+            if not hit:
+                print(f"       got subjects: {[r.get('subject') for r in results]}")
+
+        elif tier == "off_domain":
             ok = top_score < LOW_RELEVANCE_SCORE_THRESHOLD
-            low_relevance_passes += int(ok)
-            status = "PASS" if ok else "FAIL"
-            print(
-                f"[{status}] #{q['id']} '{q['query']}' -> top score {top_score:.3f} "
-                f"({'below' if ok else 'ABOVE'} threshold {LOW_RELEVANCE_SCORE_THRESHOLD})"
-            )
-            continue
+            metrics[tier]["low_relevance"].append(ok)
+            print(f"[{'PASS' if ok else 'FAIL'}] {tag} -> top score {top_score:.3f} "
+                  f"(threshold {LOW_RELEVANCE_SCORE_THRESHOLD})")
 
-        # --- keyword recall ---
-        if q.get("expected_keywords"):
-            keyword_checks += 1
-            combined_text = " ".join(r["text"].lower() for r in results)
-            hit = any(kw.lower() in combined_text for kw in q["expected_keywords"])
-            keyword_passes += int(hit)
-            status = "PASS" if hit else "FAIL"
-            print(
-                f"[{status}] #{q['id']} '{q['query']}' -> top score {top_score:.3f}, "
-                f"keyword hit: {hit}"
-            )
+        else:  # ambiguous, not_covered: observe only
+            print(f"[INFO] {tag} -> top score {top_score:.3f}")
+            print(f"       got: {short(results)}")
 
-    print("\n--- Summary ---")
-    if category_checks:
-        print(f"Category-filter accuracy: {category_passes}/{category_checks} "
-              f"({100 * category_passes / category_checks:.0f}%)")
-    if keyword_checks:
-        print(f"Keyword-recall@{RETRIEVAL_K}:      {keyword_passes}/{keyword_checks} "
-              f"({100 * keyword_passes / keyword_checks:.0f}%)")
-    if low_relevance_checks:
-        print(f"Low-relevance sanity check: {low_relevance_passes}/{low_relevance_checks} "
-              f"({100 * low_relevance_passes / low_relevance_checks:.0f}%)")
+    print("\n--- Summary by tier ---")
+    for tier, m in metrics.items():
+        print(f"\n{tier}")
+        if m["guide_hit"]:
+            print(f"  guide hit@{k}:  {rate(m['guide_hit'])}")
+            print(f"  MRR:           {sum(m['rr']) / len(m['rr']):.2f}")
+        if m["subject_hit"]:
+            print(f"  subject hit@{k}: {rate(m['subject_hit'])}")
+        if m["category"]:
+            print(f"  category ok:   {rate(m['category'])}")
+        if m["low_relevance"]:
+            print(f"  low relevance: {rate(m['low_relevance'])}")
 
-    total_checks = category_checks + keyword_checks + low_relevance_checks
-    total_passes = category_passes + keyword_passes + low_relevance_passes
-    all_pass = total_passes == total_checks
-    print(f"\nOverall: {total_passes}/{total_checks} checks passed.")
-    return all_pass
+    easy = metrics["easy"]["guide_hit"]
+    passed = True
+    if easy:
+        easy_rate = sum(easy) / len(easy)
+        ok = easy_rate >= EASY_HIT_TARGET
+        passed = passed and ok
+        print(f"\nAcceptance: easy guide hit@{k} {easy_rate:.0%} vs target "
+              f"{EASY_HIT_TARGET:.0%} -> {'PASS' if ok else 'FAIL'}")
+    if any(not v for m in metrics.values() for v in m.get("category", [])):
+        passed = False
+        print("Acceptance: category correctness -> FAIL")
+    return passed
 
 
 if __name__ == "__main__":
-    success = evaluate()
-    sys.exit(0 if success else 1)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--split", choices=["dev", "holdout", "all"], default="dev")
+    args = parser.parse_args()
+    sys.exit(0 if evaluate(args.split) else 1)
+    

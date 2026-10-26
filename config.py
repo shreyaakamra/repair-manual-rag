@@ -51,7 +51,7 @@ EMBEDDING_DIM = 384
 # https://cloud.qdrant.io) and set QDRANT_API_KEY to match.
 QDRANT_URL = _get_secret("QDRANT_URL", "http://localhost:6333")
 QDRANT_API_KEY = _get_secret("QDRANT_API_KEY")
-QDRANT_COLLECTION = "myfixit_manuals"
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "myfixit_manuals_v2")
 
 # Retrieval
 RETRIEVAL_K = 5

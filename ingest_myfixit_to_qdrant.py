@@ -36,25 +36,38 @@ from myfixit_processing import process_category_file
 
 
 def ensure_collection(client, recreate: bool = False):
-    existing = [c.name for c in client.get_collections().collections]
-    if recreate and QDRANT_COLLECTION in existing:
+    if recreate and client.collection_exists(QDRANT_COLLECTION):
         client.delete_collection(QDRANT_COLLECTION)
-        existing.remove(QDRANT_COLLECTION)
         print(f"Dropped existing collection '{QDRANT_COLLECTION}' (--recreate)")
 
-        if QDRANT_COLLECTION not in existing:
-            client.create_collection(
+    if not client.collection_exists(QDRANT_COLLECTION):
+        client.create_collection(
             collection_name=QDRANT_COLLECTION,
             vectors_config=VectorParams(size=EMBEDDING_DIM, distance=Distance.COSINE),
         )
-        client.create_payload_index(collection_name=QDRANT_COLLECTION, field_name="source_category", field_schema="keyword")
-        client.create_payload_index(collection_name=QDRANT_COLLECTION, field_name="category", field_schema="keyword")
-        client.create_payload_index(collection_name=QDRANT_COLLECTION, field_name="subject", field_schema="keyword")
+        for field in ("category", "subject", "source_category"):
+            client.create_payload_index(
+                collection_name=QDRANT_COLLECTION,
+                field_name=field,
+                field_schema="keyword",
+            )
+        client.create_payload_index(
+            collection_name=QDRANT_COLLECTION,
+            field_name="guide_id",
+            field_schema="integer",
+        )
         print(f"Created Qdrant collection '{QDRANT_COLLECTION}' with payload indexes")
     else:
         print(f"Using existing Qdrant collection '{QDRANT_COLLECTION}'")
 
-
+def build_embedding_text(c) -> str:
+    """What gets embedded. The payload 'text' stays the plain step."""
+    parts = [f"Device: {c.category}"]
+    if c.subject:
+        parts.append(f"Part: {c.subject}")
+    parts.append(f"Guide: {c.guide_title}")
+    parts.append(c.text)
+    return ". ".join(parts)
 def ingest(recreate: bool = False) -> int:
     """Runs the full ingest and returns the total number of chunks indexed."""
     embedder = get_embedder()
@@ -76,7 +89,7 @@ def ingest(recreate: bool = False) -> int:
         batch_size = 64
         for i in range(0, len(chunks), batch_size):
             batch = chunks[i : i + batch_size]
-            texts = [c.text for c in batch]
+            texts = [build_embedding_text(c) for c in batch]
             vectors = embedder.encode(texts, show_progress_bar=False)
 
             points = [

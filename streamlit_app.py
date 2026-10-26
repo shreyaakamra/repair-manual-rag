@@ -70,7 +70,7 @@ if submitted and query.strip():
             for i, c in enumerate(chunks, start=1):
                 st.markdown(
                     f"**[{i}] {c['guide_title']}** (step {c['step_order']}, "
-                    f"{c['category']}, score {c['score']:.3f})"
+                    f"{c['category']})"
                 )
                 st.write(c["text"])
                 st.divider()

@@ -1,64 +1,393 @@
 [
   {
     "id": 1,
-    "query": "how do I replace the battery",
+    "tier": "easy",
+    "split": "dev",
+    "query": "how do I swap the battery in my iPhone 3G",
     "category": "Phone",
-    "expected_keywords": ["battery", "screw", "adhesive", "connector"]
+    "expected_guide_ids": [
+      577
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": ""
   },
   {
     "id": 2,
-    "query": "screen is cracked and not responding to touch",
+    "tier": "easy",
+    "split": "dev",
+    "query": "my Galaxy S6 battery is dying, how do I replace it",
     "category": "Phone",
-    "expected_keywords": ["screen", "display", "digitizer", "lcd"]
+    "expected_guide_ids": [
+      44648
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": "Sibling guides exist (S6 Edge/Active/Edge+) - tests device confusion"
   },
   {
     "id": 3,
-    "query": "camera lens looks foggy",
+    "tier": "easy",
+    "split": "dev",
+    "query": "taking out a cracked screen on a Samsung Galaxy S5",
     "category": "Phone",
-    "expected_keywords": ["camera", "lens"]
+    "expected_guide_ids": [
+      25367
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": ""
   },
   {
     "id": 4,
-    "query": "phone won't charge",
+    "tier": "easy",
+    "split": "holdout",
+    "query": "iPhone SE battery replacement",
     "category": "Phone",
-    "expected_keywords": ["charg", "port", "battery"]
+    "expected_guide_ids": [
+      61303
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": ""
   },
   {
     "id": 5,
-    "query": "washing machine won't drain",
-    "category": "Appliance",
-    "expected_keywords": ["drain", "pump", "hose", "filter"]
+    "tier": "easy",
+    "split": "dev",
+    "query": "replacing the battery on an iPhone 6",
+    "category": "Phone",
+    "expected_guide_ids": [
+      29363
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": "Sibling confusion: iPhone 6 Plus 29424 and 6s 49800 have near-identical steps"
   },
   {
     "id": 6,
-    "query": "refrigerator not cooling",
-    "category": "Appliance",
-    "expected_keywords": ["compressor", "coolant", "thermostat", "fan"]
+    "tier": "easy",
+    "split": "dev",
+    "query": "iPhone 7 speaker replacement",
+    "category": "Phone",
+    "expected_guide_ids": [
+      88645,
+      77960
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": ""
   },
   {
     "id": 7,
-    "query": "dishwasher door won't latch",
-    "category": "Appliance",
-    "expected_keywords": ["latch", "door", "switch"]
+    "tier": "easy",
+    "split": "holdout",
+    "query": "how to replace the home button on an iPhone 5s",
+    "category": "Phone",
+    "expected_guide_ids": [
+      24983,
+      21988
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": ""
   },
   {
     "id": 8,
-    "query": "how to replace a broken screen",
-    "category": null,
-    "expected_keywords": ["screen", "display"]
+    "tier": "easy",
+    "split": "dev",
+    "query": "Kenmore 110 series washer water pump replacement",
+    "category": "Appliance",
+    "expected_guide_ids": [
+      11043
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": ""
   },
   {
     "id": 9,
-    "query": "how do I replace my car's timing belt",
-    "category": "Phone",
-    "expected_keywords": [],
-    "expect_low_relevance": true,
-    "note": "Off-domain query forced into an unrelated category filter - checks the system doesn't confidently hallucinate an answer from irrelevant retrieved chunks."
+    "tier": "easy",
+    "split": "dev",
+    "query": "replace the battery in a Roomba 551",
+    "category": "Appliance",
+    "expected_guide_ids": [
+      22511
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": ""
   },
   {
     "id": 10,
-    "query": "dishwasher is leaking water underneath",
+    "tier": "easy",
+    "split": "holdout",
+    "query": "Huawei P8 Lite battery swap",
+    "category": "Phone",
+    "expected_guide_ids": [
+      61805,
+      85475,
+      95845
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": "Three guides share one title; any of them counts"
+  },
+  {
+    "id": 11,
+    "tier": "hard",
+    "split": "dev",
+    "query": "phone won't charge",
+    "category": "Phone",
+    "expected_guide_ids": [],
+    "expected_behavior": "answer",
+    "note": "",
+    "expected_subject_patterns": [
+      "charg|usb|lightning|dock|batter"
+    ]
+  },
+  {
+    "id": 12,
+    "tier": "hard",
+    "split": "dev",
+    "query": "I can't hear the other person during calls",
+    "category": "Phone",
+    "expected_guide_ids": [],
+    "expected_behavior": "answer",
+    "note": "",
+    "expected_subject_patterns": [
+      "earpiece|speaker"
+    ]
+  },
+  {
+    "id": 13,
+    "tier": "hard",
+    "split": "holdout",
+    "query": "people say they can't hear me when I talk",
+    "category": "Phone",
+    "expected_guide_ids": [],
+    "expected_behavior": "answer",
+    "note": "",
+    "expected_subject_patterns": [
+      "\\\\bmic(rophone)?\\\\b"
+    ]
+  },
+  {
+    "id": 14,
+    "tier": "hard",
+    "split": "dev",
+    "query": "my phone no longer vibrates",
+    "category": "Phone",
+    "expected_guide_ids": [],
+    "expected_behavior": "answer",
+    "note": "",
+    "expected_subject_patterns": [
+      "vibrat"
+    ]
+  },
+  {
+    "id": 15,
+    "tier": "hard",
+    "split": "dev",
+    "query": "my phone fell in water",
+    "category": "Phone",
+    "expected_guide_ids": [
+      5825,
+      95280,
+      32410,
+      66924,
+      29567
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": "Only a handful of liquid-damage guides exist in the corpus"
+  },
+  {
+    "id": 16,
+    "tier": "hard",
+    "split": "dev",
+    "query": "screen is cracked and doesn't respond to touch",
+    "category": "Phone",
+    "expected_guide_ids": [],
+    "expected_behavior": "answer",
+    "note": "",
+    "expected_subject_patterns": [
+      "screen|display|lcd|digitizer|glass"
+    ]
+  },
+  {
+    "id": 17,
+    "tier": "hard",
+    "split": "holdout",
+    "query": "my camera photos look foggy",
+    "category": "Phone",
+    "expected_guide_ids": [],
+    "expected_behavior": "answer",
+    "note": "",
+    "expected_subject_patterns": [
+      "camera|lens"
+    ]
+  },
+  {
+    "id": 18,
+    "tier": "hard",
+    "split": "dev",
+    "query": "the home button is stuck and won't click",
+    "category": "Phone",
+    "expected_guide_ids": [],
+    "expected_behavior": "answer",
+    "note": "",
+    "expected_subject_patterns": [
+      "home"
+    ]
+  },
+  {
+    "id": 19,
+    "tier": "hard",
+    "split": "dev",
+    "query": "washing machine won't drain",
     "category": "Appliance",
-    "expected_keywords": ["leak", "hose", "seal", "gasket"]
+    "expected_guide_ids": [
+      11043
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": "Thin coverage: one directly relevant guide"
+  },
+  {
+    "id": 20,
+    "tier": "hard",
+    "split": "holdout",
+    "query": "my fridge isn't cooling",
+    "category": "Appliance",
+    "expected_guide_ids": [
+      16423,
+      43919,
+      58523
+    ],
+    "expected_subjects": [],
+    "expected_behavior": "answer",
+    "note": ""
+  },
+  {
+    "id": 21,
+    "tier": "ambiguous",
+    "split": "dev",
+    "query": "fix my screen",
+    "category": null,
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "observe",
+    "note": ""
+  },
+  {
+    "id": 22,
+    "tier": "ambiguous",
+    "split": "dev",
+    "query": "how do I replace the battery",
+    "category": null,
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "observe",
+    "note": "Original baseline query"
+  },
+  {
+    "id": 23,
+    "tier": "ambiguous",
+    "split": "holdout",
+    "query": "it won't turn on",
+    "category": null,
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "observe",
+    "note": ""
+  },
+  {
+    "id": 24,
+    "tier": "ambiguous",
+    "split": "dev",
+    "query": "how do I open it up",
+    "category": null,
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "observe",
+    "note": ""
+  },
+  {
+    "id": 25,
+    "tier": "not_covered",
+    "split": "dev",
+    "query": "dishwasher door won't latch",
+    "category": "Appliance",
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "abstain",
+    "note": "Corpus has only 2 dishwasher guides, neither about latches; no step text mentions dishwasher+latch"
+  },
+  {
+    "id": 26,
+    "tier": "not_covered",
+    "split": "dev",
+    "query": "dishwasher is leaking underneath",
+    "category": "Appliance",
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "abstain",
+    "note": ""
+  },
+  {
+    "id": 27,
+    "tier": "not_covered",
+    "split": "holdout",
+    "query": "replace a laptop hard drive",
+    "category": null,
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "abstain",
+    "note": "No laptop guides ingested"
+  },
+  {
+    "id": 28,
+    "tier": "not_covered",
+    "split": "dev",
+    "query": "fix a cracked iPad screen",
+    "category": null,
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "abstain",
+    "note": "No tablet guides ingested"
+  },
+  {
+    "id": 29,
+    "tier": "off_domain",
+    "split": "dev",
+    "query": "how do I replace my car's timing belt",
+    "category": "Phone",
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "abstain",
+    "note": "Forced into Phone filter (original check)"
+  },
+  {
+    "id": 30,
+    "tier": "off_domain",
+    "split": "holdout",
+    "query": "how do I bake sourdough bread",
+    "category": null,
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "abstain",
+    "note": ""
+  },
+  {
+    "id": 31,
+    "tier": "off_domain",
+    "split": "dev",
+    "query": "how do I file my income taxes",
+    "category": null,
+    "expected_guide_ids": [],
+    "expected_subjects": [],
+    "expected_behavior": "abstain",
+    "note": ""
   }
 ]
